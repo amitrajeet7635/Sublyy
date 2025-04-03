@@ -1,4 +1,4 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import axios from 'axios';
 import { Eye, EyeOff, Mail, User, Lock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -6,7 +6,7 @@ import { PasswordStrengthMeter } from '../../components/ui/PasswordStrengthMeter
 import FloatingBackground from '../../components/ui/FloatingBackground';
 import { AuthContext } from '../../context/authContext';
 
-const API_URL = "http://localhost:3000/api/auth"; // Ensure it matches the backend URL
+const API_URL = "http://localhost:3000/api/auth";
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -17,6 +17,15 @@ const Auth = () => {
 
   const navigate = useNavigate();
   const { handleLogin } = useContext(AuthContext);
+
+  useEffect(() => {
+    const query = new URLSearchParams(window.location.search);
+    const token = query.get('token');
+    if (token) {
+      handleLogin({ accessToken: token });
+      navigate('/dashboard');
+    }
+  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -32,40 +41,24 @@ const Auth = () => {
     setIsSubmitting(true);
 
     try {
-        const url = isLogin ? `${API_URL}/login` : `${API_URL}/signup`;
-        const payload = isLogin 
-            ? { email: formData.email, password: formData.password }
-            : { username: formData.name, email: formData.email, password: formData.password };
+      const url = isLogin ? `${API_URL}/login` : `${API_URL}/signup`;
+      const payload = isLogin
+        ? { email: formData.email, password: formData.password }
+        : { username: formData.name, email: formData.email, password: formData.password };
 
-        const response = await axios.post(url, payload, { withCredentials: true });
+      const response = await axios.post(url, payload, { withCredentials: true });
 
-        console.log("Signup/Login response:", response.data); // Debugging
+      if (!response.data || !response.data.accessToken) {
+        throw new Error("No accessToken received");
+      }
 
-        // Ensure accessToken is received
-        if (!response.data || !response.data.accessToken) {
-            throw new Error("No accessToken received");
-        }
-
-        const { accessToken, user } = response.data;
-        localStorage.setItem('accessToken', accessToken);
-        await handleLogin({ user, accessToken });
-
-        console.log("Redirecting to /dashboard...");
-        navigate('/dashboard'); 
-
+      handleLogin({ user: response.data.user, accessToken: response.data.accessToken });
+      navigate('/dashboard');
     } catch (err) {
-        console.error("Error:", err.response?.data || err.message);
-        setError(err.response?.data?.message || "Something went wrong!");
+      setError(err.response?.data?.message || "Something went wrong!");
     } finally {
-        setIsSubmitting(false);
+      setIsSubmitting(false);
     }
-};
-
-
-
-
-  const handleGoogleSignIn = () => {
-    window.location.href = `${API_URL}/google`;
   };
 
   return (
@@ -135,16 +128,6 @@ const Auth = () => {
             <p className="mx-2 text-gray-700 text-sm">or continue with</p>
             <div className="h-px bg-gray-400 w-1/3"></div>
           </div>
-
-          {/* Google Sign-In Button */}
-          <button
-            type="button"
-            onClick={handleGoogleSignIn}
-            className="w-full py-2 px-4 bg-white/90 hover:bg-white rounded-lg text-gray-800 font-semibold flex items-center justify-center gap-2 transition-colors"
-          >
-            <img src="https://www.google.com/favicon.ico" alt="Google" className="w-5 h-5" />
-            Sign {isLogin ? 'in' : 'up'} with Google
-          </button>
 
           <p className="text-center text-gray-800 mt-4">
             {isLogin ? "Don't have an account?" : "Already have an account?"}
