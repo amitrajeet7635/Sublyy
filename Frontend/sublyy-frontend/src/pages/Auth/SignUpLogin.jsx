@@ -61,6 +61,10 @@ const Auth = () => {
     }
   };
 
+  const handleGoogleLogin = () => {
+    window.open("http://localhost:3000/api/auth/google", "_self");
+  };
+
   return (
     <div className="min-h-[85vh] flex flex-col items-center justify-center">
       <FloatingBackground />
@@ -127,6 +131,16 @@ const Auth = () => {
             <div className="h-px bg-gray-400 w-1/3"></div>
             <p className="mx-2 text-gray-700 text-sm">or continue with</p>
             <div className="h-px bg-gray-400 w-1/3"></div>
+          </div>
+
+          <div className="flex justify-center ">
+            <button
+              onClick={handleGoogleLogin}
+              className="flex items-center justify-center w-full gap-2 px-4 py-2 bg-white hover:bg-gray-900 text-black hover:text-white rounded-lg font-semibold"
+            >
+              <img src="https://www.svgrepo.com/show/303108/google-icon-logo.svg" alt="Google Logo" className="w-5 h-5" />
+              Sign in with Google
+            </button>
           </div>
 
           <p className="text-center text-gray-800 mt-4">

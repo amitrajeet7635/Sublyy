@@ -8,20 +8,37 @@ const router = express.Router();
 router.post("/login", userLogin);
 router.post("/signup", userSignUp);
 router.post("/refresh-token", refreshToken);
-router.post("/logout", logout);
 router.get("/protected", verifyToken, (req, res) => res.send("Protected data"));
 
-// Google Auth Route
-router.get("/google", passport.authenticate("google", { scope: ["profile", "email"] }));
+// Google OAuth login route
+router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
 
-// Google Auth Callback
-router.get(
-  "/google/callback",
-  passport.authenticate("google", { failureRedirect: "http://localhost:5173/auth?error=login_failed" }),
+// Google OAuth callback route
+router.get('/google/callback',
+  passport.authenticate('google', { failureRedirect: '/' }),
   (req, res) => {
-    const token = req.user.accessToken; // Assuming `accessToken` is generated in the strategy
-    res.redirect(`http://localhost:5173/auth?token=${token}`);
+      // Redirect to the frontend with user info
+      res.redirect(`http://localhost:5173/dashboard`);
   }
 );
+
+
+
+// Get user session route (JSON response for API)
+router.get("/user", (req, res) => {
+  console.log("Session user:", req.user);  // Debugging log
+  if (req.user) {
+      return res.json({ user: req.user });
+  } else {
+      return res.status(401).json({ message: "Unauthorized" });
+  }
+});
+
+router.get("/login/failed", (req, res) => {
+  return res.status(401).json({
+      success: false,
+      message: "Unauthorized. Please log in.",
+  });
+});
 
 export default router;
