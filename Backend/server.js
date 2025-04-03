@@ -6,7 +6,12 @@ import morgan from "morgan"
 import bodyParser from "body-parser";
 import cookieParser from "cookie-parser"
 import { connectDB } from "./src/config/db.js"
-import authRoutes from "./src/routes/authRoutes.js"
+import session from "express-session";
+import passport from "passport";
+import authRoutes from "./src/routes/authRoutes.js";
+import MongoStore from "connect-mongo";
+
+import './src/config/passport.js';
 
 
 // Loading the environment variables
@@ -24,6 +29,26 @@ app.use(cors({
     allowedHeaders: 'Content-Type,Authorization',
 
 }));
+
+app.use(
+    session({
+        secret: process.env.SESSION_SECRET,
+        resave: false,
+        saveUninitialized: false,
+        store: MongoStore.create({
+            mongoUrl: process.env.MONGO_URI,
+            collectionName: "sessions",
+        }),
+        cookie: {
+            secure: false,  // Set to true if using HTTPS
+            httpOnly: true,
+            maxAge: 24 * 60 * 60 * 1000, // 1 day
+        },
+    })
+);
+
+app.use(passport.initialize());
+app.use(passport.session());
 app.use(morgan("dev"));
 app.use(helmet());
 app.use(cookieParser());

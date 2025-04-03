@@ -1,5 +1,5 @@
 import { createContext, useState, useEffect } from "react";
-import { login, logout, refreshToken } from "../services/api";
+import { login, logout, refreshToken, fetchUser } from "../services/api";
 
 export const AuthContext = createContext();
 
@@ -22,33 +22,77 @@ export const AuthProvider = ({ children }) => {
         return localStorage.getItem("accessToken") || "";
     });
 
+    //  Fetch refreshed token on component mount
     useEffect(() => {
         const fetchRefreshToken = async () => {
             try {
                 const { data } = await refreshToken();
-                setAccessToken(data.accessToken);
-                localStorage.setItem("accessToken", data.accessToken);
+                if (data && data.accessToken) {
+                    setAccessToken(data.accessToken);
+                    localStorage.setItem("accessToken", data.accessToken);
+                } else {
+                    console.error("No access token returned from refreshToken.");
+                    handleLogout();
+                }
             } catch (error) {
                 console.error("Failed to refresh token:", error);
                 handleLogout();
             }
         };
 
-        if (accessToken) {
+        if (!accessToken) {
             fetchRefreshToken();
         }
     }, []);
 
+    useEffect(() => {
+        const checkAuth = async () => {
+            try {
+                const { data } = await fetchUser();
+                setUser(data.user);
+            } catch (error) {
+                console.error("Not authenticated, redirecting to login.");
+                navigate("/login");  
+            }
+        };
+
+        checkAuth();
+    }, []);
+
+    //  Fetch Google OAuth user when component mounts
+    useEffect(() => {
+        const fetchGoogleUser = async () => {
+            try {
+                const { data } = await fetchUser(); // Fetch user from /api/auth/user
+                if (data && data.user) {
+                    // Set user and accessToken properly
+                    handleLogin({ user: data.user, accessToken: data.accessToken || "" });
+                }
+            } catch (error) {
+                console.error("Google OAuth login failed:", error);
+            }
+        };
+
+        if (!user) {
+            fetchGoogleUser(); // Fetch only if user is not already stored
+        }
+    }, []);
+
+    //  Handle Login for both Email/Password & Google OAuth
     const handleLogin = async ({ user, accessToken }) => {
         setUser(user);
-        setAccessToken(accessToken);
-        localStorage.setItem("accessToken", accessToken);
-        localStorage.setItem("user", JSON.stringify(user)); // Ensure valid JSON
+        setAccessToken(accessToken || ""); // Default to empty string if undefined
+        localStorage.setItem("user", JSON.stringify(user));
+        if (accessToken) {
+            localStorage.setItem("accessToken", accessToken);
+        }
     };
 
+    // Handle Logout (Clear Normal & Google Session)
     const handleLogout = async () => {
         try {
             await logout();
+            window.location.href = "http://localhost:3000/api/auth/logout"; // Redirect to backend logout
         } catch (error) {
             console.error("Logout error:", error);
         }

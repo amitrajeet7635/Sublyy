@@ -17,8 +17,10 @@ API.interceptors.request.use(
 );
 
 export const signup = (data) => API.post("/signup", data);
-export const login = (data) => API.post("/login", data).then((res) => res.data);
+export const login = (data) => API.post("/login", data);
 export const refreshToken = () => API.post("/refresh-token");
 export const logout = () => API.post("/logout");
+export const fetchUser = () => API.get("/user").then((res) => res.data);
+
 
 export default API;
