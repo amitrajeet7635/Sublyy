@@ -1,27 +1,39 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import Auth from "./pages/Auth/SignUpLogin";
 import Dashboard from "./pages/Dashboard/Dashboard";
+import AddSubscription from "./pages/Dashboard/AddSubscription";
 import ProtectedRoute from "./routes/ProtectedRoutes";
-import Navbar from "./components/ui/Navbar"
+import LandingPage from "./pages/Landing/LandingPage";
+import Layout from "./components/ui/Layout";
+import Settings from "./pages/Settings/Settings";
+
+// Placeholder pages for new routes
+const Reports = () => <div>Reports Page</div>;
+const Analytics = () => <div>Analytics Page</div>;
 
 const App = () => {
   return (
-    <Router>
-      <Navbar></Navbar>
+    <>
       <Routes>
-        
-        {/* Public Route */}
+        {/* Public Routes */}
+        <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<Auth />} />
 
-        {/* Protected Routes */}
+        {/* Protected Routes with Layout */}
         <Route element={<ProtectedRoute />}>
-          <Route path="/dashboard" element={<Dashboard />} />
+          <Route element={<Layout />}>
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/dashboard/add-subscription" element={<AddSubscription />} />
+            <Route path="/reports" element={<Reports />} />
+            <Route path="/analytics" element={<Analytics />} />
+            <Route path="/settings" element={<Settings />} />
+          </Route>
         </Route>
 
-        {/* Catch All (Optional) */}
-        <Route path="*" element={<Navigate to="/login" />} />
+        {/* Catch All */}
+        <Route path="*" element={<Navigate to="/" />} />
       </Routes>
-    </Router>
+    </>
   );
 };
 
