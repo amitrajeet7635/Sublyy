@@ -1,231 +1,134 @@
-import React, { useContext, useState } from "react";
+import React, { useState, useContext, useEffect } from "react";
 import { SettingsContext } from "../../context/settingsContext";
-import { LogOut } from "lucide-react";
 
-const currencyOptions = [
-  { code: "USD", label: "US Dollar ($)" },
-  { code: "INR", label: "Indian Rupee (₹)" },
-  { code: "EUR", label: "Euro (€)" },
-];
+export default function Settings() {
+  const { userInfo, setUserInfo } = useContext(SettingsContext);
+  const [username, setUsername] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [saveMsg, setSaveMsg] = useState("");
+  const [currency, setCurrency] = useState("INR");
+  const [locale, setLocale] = useState("en-IN");
+  const [timezone, setTimezone] = useState("Asia/Kolkata");
+  const [categoriesCount] = useState(78);
+  const [tagsCount] = useState(0);
 
-const sections = [
-  { key: "general", label: "General" },
-  { key: "account", label: "Account Info" },
-  { key: "personal", label: "Personal Info" },
-  { key: "connect", label: "Connect" }
-];
+  // Sync username input with backend userInfo
+  useEffect(() => {
+    setUsername(userInfo?.username || "");
+  }, [userInfo?.username]);
 
-const Settings = () => {
-  const { settings, setSettings, userInfo, setUserInfo, loading } = useContext(SettingsContext);
-  const [activeSection, setActiveSection] = useState("general");
-  const [editInfo, setEditInfo] = useState(userInfo);
-  const [editSettings, setEditSettings] = useState(settings);
-  const [message, setMessage] = useState("");
-  const [whatsapp, setWhatsapp] = useState(settings.whatsappNumber || "");
-  const [whatsappConnected, setWhatsappConnected] = useState(settings.whatsappConnected || false);
-
-  if (loading) return <div className="p-8">Loading...</div>;
-
-  // Section handlers
-  const handleInfoChange = (e) => setEditInfo({ ...editInfo, [e.target.name]: e.target.value });
-  const handleSettingsChange = (e) => setEditSettings({ ...editSettings, [e.target.name]: e.target.value });
-
-  const handleSaveInfo = async (e) => {
-    e.preventDefault();
-    await setUserInfo(editInfo);
-    setMessage("Profile updated!");
-    setTimeout(() => setMessage(""), 2000);
-  };
-
-  const handleSaveSettings = async (e) => {
-    e.preventDefault();
-    await setSettings({ ...editSettings });
-    setMessage("Preferences saved!");
-    setTimeout(() => setMessage(""), 2000);
-  };
-
-  const handleSavePersonal = async (e) => {
-    e.preventDefault();
-    // Add personal info save logic here if you have more fields
-    setMessage("Personal info saved!");
-    setTimeout(() => setMessage(""), 2000);
-  };
-
-  const handleConnectWhatsapp = async () => {
-    setWhatsappConnected(true);
-    await setSettings({ ...editSettings, whatsappNumber: whatsapp, whatsappConnected: true });
-    setMessage("WhatsApp connected! You will receive reminders.");
-    setTimeout(() => setMessage(""), 2000);
+  // Save username to backend
+  const handleUsernameSave = async () => {
+    setSaving(true);
+    setSaveMsg("");
+    try {
+      await setUserInfo({ ...userInfo, username });
+      setSaveMsg("Username updated!");
+    } catch (err) {
+      setSaveMsg("Failed to update username.");
+    } finally {
+      setSaving(false);
+      setTimeout(() => setSaveMsg(""), 2000);
+    }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-white via-indigo-50 to-purple-50 flex flex-col items-center py-12 px-4">
-      {/* Horizontal Navigation Bar */}
-      <nav className="w-full max-w-2xl mb-8">
-        <ul className="flex justify-center gap-4 border-b border-indigo-100">
-          {sections.map((sec) => (
-            <li key={sec.key}>
-              <button
-                className={`px-6 py-3 font-medium transition-all duration-200 border-b-2 ${
-                  activeSection === sec.key
-                    ? "border-indigo-600 text-indigo-700 bg-indigo-50 rounded-t-lg"
-                    : "border-transparent text-gray-500 hover:text-indigo-600"
-                }`}
-                onClick={() => setActiveSection(sec.key)}
-              >
-                {sec.label}
-              </button>
-            </li>
-          ))}
-        </ul>
-      </nav>
+    <div className="p-8 max-w-3xl mx-auto">
+      <h1 className="text-3xl font-bold text-gray-900 mb-8">Sublyy settings</h1>
 
-      {/* Main Content */}
-      <main className="w-full max-w-2xl bg-white rounded-xl shadow border border-indigo-100 p-8">
-        {/* Section Content */}
-        {activeSection === "general" && (
-          <form onSubmit={handleSaveSettings} className="space-y-6">
-            <h2 className="text-xl font-bold mb-4 text-gray-800">General Preferences</h2>
-            <div>
-              <label className="block text-gray-700 font-medium mb-1">Preferred Currency</label>
-              <select
-                name="currency"
-                value={editSettings.currency}
-                onChange={handleSettingsChange}
-                className="w-full px-4 py-3 rounded-lg border border-indigo-200 bg-indigo-50/60 focus:outline-none focus:ring-2 focus:ring-purple-400 transition-all"
-              >
-                {currencyOptions.map(opt => (
-                  <option key={opt.code} value={opt.code}>{opt.label}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-gray-700 font-medium mb-1">Notifications</label>
-              <select
-                name="notifications"
-                value={editSettings.notifications || "enabled"}
-                onChange={handleSettingsChange}
-                className="w-full px-4 py-3 rounded-lg border border-indigo-200 bg-indigo-50/60 focus:outline-none focus:ring-2 focus:ring-purple-400 transition-all"
-              >
-                <option value="enabled">Enabled</option>
-                <option value="disabled">Disabled</option>
-              </select>
-            </div>
-            <button
-              type="submit"
-              className="w-full py-3 px-4 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-lg text-white font-semibold shadow-lg transition-all"
-            >
-              Save Preferences
+      {/* Tabs */}
+      <div className="flex border-b border-gray-200 mb-8">
+        <button className="px-4 py-2 -mb-px border-b-2 border-indigo-600 text-indigo-600 font-medium focus:outline-none">
+          General
+        </button>
+      </div>
+
+      {/* Change Username */}
+      <section className="bg-white rounded-xl shadow border border-gray-100 p-8 mb-8">
+        <h2 className="text-lg font-semibold text-gray-800 mb-2">Change Username</h2>
+        <p className="text-gray-500 mb-4">Update your username for your Sublyy account.</p>
+        <div className="flex items-center gap-3">
+          <input
+            type="text"
+            className="w-64 px-4 py-2 rounded-lg border border-indigo-200 bg-indigo-50/60 focus:outline-none focus:ring-2 focus:ring-purple-400 transition-all"
+            value={username}
+            onChange={e => setUsername(e.target.value)}
+            placeholder="Enter new username"
+          />
+          <button
+            className="px-4 py-2 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition-all"
+            onClick={handleUsernameSave}
+            disabled={saving || !username.trim() || username === userInfo?.username}
+          >
+            {saving ? "Saving..." : "Save"}
+          </button>
+          {saveMsg && (
+            <span className={`ml-2 text-sm ${saveMsg.includes("updated") ? "text-green-600" : "text-red-500"}`}>
+              {saveMsg}
+            </span>
+          )}
+        </div>
+      </section>
+
+      {/* Currency and Format */}
+      <section className="bg-white rounded-xl shadow border border-gray-100 p-8 mb-8">
+        <h2 className="text-lg font-semibold text-gray-800 mb-4">Currency and format</h2>
+        <div className="mb-6">
+          <div className="font-medium text-gray-700 mb-1">Currency</div>
+          <div className="flex items-center gap-3">
+            <span className="inline-flex items-center gap-2 px-3 py-1 bg-indigo-50 rounded-lg border border-indigo-200 font-medium text-indigo-700">
+              <img src="https://upload.wikimedia.org/wikipedia/commons/4/41/Flag_of_India.svg" alt="INR" className="w-5 h-5 rounded-full" />
+              Indian rupee (INR)
+            </span>
+            <button className="ml-2 text-gray-400 hover:text-indigo-600">
+              <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path d="M12 20v-8m0 0V4m0 8h8m-8 0H4" strokeLinecap="round" strokeLinejoin="round"/></svg>
             </button>
-            {message && <div className="text-center text-green-600 mt-2">{message}</div>}
-          </form>
-        )}
-
-        {activeSection === "account" && (
-          <form onSubmit={handleSaveInfo} className="space-y-6">
-            <h2 className="text-xl font-bold mb-4 text-gray-800">Account Info</h2>
-            <div>
-              <label className="block text-gray-700 font-medium mb-1">Username</label>
-              <input
-                type="text"
-                name="username"
-                value={editInfo.username || ""}
-                onChange={handleInfoChange}
-                className="w-full px-4 py-3 rounded-lg border border-indigo-200 bg-indigo-50/60 focus:outline-none focus:ring-2 focus:ring-purple-400 transition-all"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-gray-700 font-medium mb-1">Email</label>
-              <input
-                type="email"
-                name="email"
-                value={editInfo.email || ""}
-                onChange={handleInfoChange}
-                className="w-full px-4 py-3 rounded-lg border border-indigo-200 bg-indigo-50/60 focus:outline-none focus:ring-2 focus:ring-purple-400 transition-all"
-                required
-              />
-            </div>
-            {/* Add profilePic upload if needed */}
-            <button
-              type="submit"
-              className="w-full py-3 px-4 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-lg text-white font-semibold shadow-lg transition-all"
-            >
-              Save Account Info
+          </div>
+          <div className="text-xs text-gray-400 mt-1">The currency you want to see your expenses in. You can add expenses in other currencies.</div>
+        </div>
+        <div className="mb-6">
+          <div className="font-medium text-gray-700 mb-1">Date and Time Format</div>
+          <div className="flex items-center gap-3">
+            <span className="inline-flex items-center gap-2 px-3 py-1 bg-indigo-50 rounded-lg border border-indigo-200 font-medium text-indigo-700">
+              {locale}
+            </span>
+            <button className="ml-2 text-gray-400 hover:text-indigo-600">
+              <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path d="M12 20v-8m0 0V4m0 8h8m-8 0H4" strokeLinecap="round" strokeLinejoin="round"/></svg>
             </button>
-            {message && <div className="text-center text-green-600 mt-2">{message}</div>}
-          </form>
-        )}
-
-        {activeSection === "personal" && (
-          <form onSubmit={handleSavePersonal} className="space-y-6">
-            <h2 className="text-xl font-bold mb-4 text-gray-800">Personal Info</h2>
-            {/* Add more personal info fields here */}
-            <div>
-              <label className="block text-gray-700 font-medium mb-1">Profile Picture (coming soon)</label>
-              <input
-                type="file"
-                disabled
-                className="w-full px-4 py-3 rounded-lg border border-indigo-200 bg-indigo-50/60"
-              />
-            </div>
-            <button
-              type="submit"
-              className="w-full py-3 px-4 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-lg text-white font-semibold shadow-lg transition-all"
-              disabled
-            >
-              Save Personal Info
+          </div>
+          <div className="text-xs text-gray-400 mt-1">Choose how you want to see dates and times, based on the selected region</div>
+        </div>
+        <div>
+          <div className="font-medium text-gray-700 mb-1">Time zone</div>
+          <div className="flex items-center gap-3">
+            <span className="inline-flex items-center gap-2 px-3 py-1 bg-indigo-50 rounded-lg border border-indigo-200 font-medium text-indigo-700">
+              {timezone}
+            </span>
+            <button className="ml-2 text-gray-400 hover:text-indigo-600">
+              <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path d="M12 20v-8m0 0V4m0 8h8m-8 0H4" strokeLinecap="round" strokeLinejoin="round"/></svg>
             </button>
-            {message && <div className="text-center text-green-600 mt-2">{message}</div>}
-          </form>
-        )}
+          </div>
+          <div className="text-xs text-gray-400 mt-1">Specify your time zone to get accurate notifications</div>
+        </div>
+      </section>
 
-        {activeSection === "connect" && (
-          <form onSubmit={e => e.preventDefault()} className="space-y-6">
-            <h2 className="text-xl font-bold mb-4 text-gray-800">Connect</h2>
-            <div>
-              <label className="block text-gray-700 font-medium mb-1">Connect With WhatsApp</label>
-              <div className="flex gap-2 items-center">
-                <input
-                  type="text"
-                  placeholder="WhatsApp Number"
-                  value={whatsapp}
-                  onChange={e => setWhatsapp(e.target.value)}
-                  className="flex-1 px-4 py-3 rounded-lg border border-indigo-200 bg-indigo-50/60 focus:outline-none focus:ring-2 focus:ring-green-400 transition-all"
-                  disabled={whatsappConnected}
-                />
-                {whatsappConnected ? (
-                  <span className="text-green-600 font-semibold">Connected</span>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={handleConnectWhatsapp}
-                    className="px-4 py-2 bg-green-500 text-white rounded-lg font-semibold hover:bg-green-600 transition-all"
-                    disabled={!whatsapp}
-                  >
-                    Connect
-                  </button>
-                )}
-              </div>
-              <div className="text-xs text-gray-500 mt-1">
-                {whatsappConnected
-                  ? "You'll receive reminders on WhatsApp."
-                  : "Enter your WhatsApp number to receive subscription reminders."}
-              </div>
-            </div>
-          </form>
-        )}
-
-        {/* Logout button at the bottom */}
-        <div className="mt-10 flex justify-end">
-          <button className="flex items-center gap-2 text-red-500 hover:text-red-700 font-semibold">
-            <LogOut size={18} />
-            Logout
+      {/* Connect with WhatsApp */}
+      <section className="bg-white rounded-xl shadow border border-green-100 p-8 mb-8">
+        <h2 className="text-lg font-semibold text-gray-800 mb-2">Connect with WhatsApp</h2>
+        <p className="text-gray-500 mb-4">
+          You can connect with WhatsApp to get updates related to your subscriptions directly.
+        </p>
+        <div className="flex items-center gap-3">
+          <input
+            type="text"
+            className="w-64 px-4 py-2 rounded-lg border border-green-200 bg-green-50/60 focus:outline-none focus:ring-2 focus:ring-green-400 transition-all"
+            placeholder="Enter your WhatsApp number"
+          />
+          <button className="px-4 py-2 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition-all">
+            Connect
           </button>
         </div>
-      </main>
+      </section>
     </div>
   );
-};
-
-export default Settings;
+}
