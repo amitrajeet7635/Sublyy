@@ -76,6 +76,26 @@ app.use(
 
 app.use(passport.initialize());
 app.use(passport.session());
+
+app.use(
+    session({
+        secret: process.env.SESSION_SECRET,
+        resave: false,
+        saveUninitialized: false,
+        store: MongoStore.create({
+            mongoUrl: process.env.MONGO_URI,
+            collectionName: "sessions",
+        }),
+        cookie: {
+            secure: false,  // Set to true if using HTTPS
+            httpOnly: true,
+            maxAge: 24 * 60 * 60 * 1000, // 1 day
+        },
+    })
+);
+
+app.use(passport.initialize());
+app.use(passport.session());
 app.use(morgan("dev"));
 app.use(helmet());
 app.use(cookieParser());
